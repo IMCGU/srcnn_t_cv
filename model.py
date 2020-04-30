@@ -3,7 +3,7 @@ import time
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from utils import (
+from utils import (#從utils.py import函式
     input_setup,
     checkpoint_dir,
     read_data,
@@ -13,9 +13,9 @@ from utils import (
 )
 
 __DEBUG__ = True
-class SRCNN(object):
+class SRCNN(object):#類別
 
-    def __init__(self,
+    def __init__(self,#建構式 初始化，下面每個函式才可以使用建構式的attribute
                  sess,
                  image_size,
                  label_size,
@@ -30,9 +30,9 @@ class SRCNN(object):
         self.images = tf.placeholder(tf.float32, [None, self.image_size, self.image_size, self.c_dim], name='images')
         self.labels = tf.placeholder(tf.float32, [None, self.label_size, self.label_size, self.c_dim], name='labels')
         
-        self.weights = {
-            'w1': tf.Variable(tf.random_normal([9, 9, self.c_dim, 64], stddev=1e-3), name='w1'),
-            'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),
+        self.weights = {#ditionary作法 前面是key 後面是value
+            'w1': tf.Variable(tf.random_normal([9, 9, self.c_dim, 64], stddev=1e-3), name='w1'),#有3層conv,3個權重
+            'w2': tf.Variable(tf.random_normal([1, 1, 64, 32], stddev=1e-3), name='w2'),#input 64個權重 從第一層output得到,stddev標準差10的負3次方
             'w3': tf.Variable(tf.random_normal([5, 5, 32, self.c_dim], stddev=1e-3), name='w3')
         }
 
@@ -42,9 +42,9 @@ class SRCNN(object):
             'b3': tf.Variable(tf.zeros([self.c_dim], name='b3'))
         }
         
-        self.pred = self.model()
+        self.pred = self.model()#呼叫51行傳回conv3結果，給self.pred用
         
-        self.loss = tf.reduce_mean(tf.square(self.labels - self.pred))
+        self.loss = tf.reduce_mean(tf.square(self.labels - self.pred))#tf後面接內建函式
 
         self.saver = tf.train.Saver() # To save checkpoint
 
@@ -64,8 +64,8 @@ class SRCNN(object):
         input_, label_ = read_data(data_dir)
         # Stochastic gradient descent with the standard backpropagation
         #self.train_op = tf.train.GradientDescentOptimizer(config.learning_rate).minimize(self.loss)
-        self.train_op = tf.train.AdamOptimizer(learning_rate=config.learning_rate).minimize(self.loss)
-        tf.initialize_all_variables().run()
+        self.train_op = tf.train.AdamOptimizer(learning_rate=config.learning_rate).minimize(self.loss)#最小化w,b
+        tf.initialize_all_variables().run()#session開始run
 
         counter = 0
         time_ = time.time()
@@ -74,15 +74,15 @@ class SRCNN(object):
         # Train
         if config.is_train:
             print("Now Start Training...")
-            for ep in range(config.epoch):
+            for ep in range(config.epoch):#總過跑幾次epoch
                 # Run by batch images
                 batch_idxs = len(input_) // config.batch_size
-                for idx in range(0, batch_idxs):
+                for idx in range(0, batch_idxs):#每次跑128個batch
                     batch_images = input_[idx * config.batch_size : (idx + 1) * config.batch_size]
                     batch_labels = label_[idx * config.batch_size : (idx + 1) * config.batch_size]
                     counter += 1
                     _, err = self.sess.run([self.train_op, self.loss], feed_dict={self.images: batch_images, self.labels: batch_labels})
-                    err_li.append(err)
+                    err_li.append(err)#feed_dict會傳到build model的self.image和self.label裡
                     if counter % 10 == 0:
                         print("Epoch: [%2d], step: [%2d], time: [%4.4f], loss: [%.8f]" % ((ep+1), counter, time.time()-time_, err))
                         #print(label_[1] - self.pred.eval({self.images: input_})[1],'loss:]',err)
